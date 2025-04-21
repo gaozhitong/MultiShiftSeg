@@ -58,43 +58,83 @@ sh make.sh
 ```
 
 ### Data Preparation
+#### 1. Training Dataset
+We use Cityscapes for training, which you can download from the [official website](https://www.cityscapes-dataset.com/).
+We augment the original dataset with multiple distribution shifts using [ControlNet](https://github.com/lllyasviel/ControlNet). To reproduce the data generation process, please refer to the [Generation Instruction](CGAug/README.md).
+
+You can also directly download our already generated data from [Google Drive](https://drive.google.com/file/d/1PxjH5q-R6kBdVaaC0ssBXwl8Z7JbBWIk/view?usp=share_link)
+or [Hugging Face](https://huggingface.co/datasets/Cuttle-fish-my/DTWP_ADE/tree/main). 
+
+#### 2. Evaluation Dataset
+Below are the datasets used in our evaluations, along with links for downloading:
+* [RoadAnomaly](https://www.epfl.ch/labs/cvlab/data/road-anomaly/) 
+* [SMIYC - RoadAnomaly21](https://uni-wuppertal.sciebo.de/s/TVR7VxukVrV7fUH/download)
+* [SMIYC - RoadObstacle21](https://uni-wuppertal.sciebo.de/s/wQQq2saipS339QA/download)
+* [ACDC-POC](https://download.europe.naverlabs.com/POC_Datasets/data.zip) (you may need to convert .npz files into .png manually.)
+* [MUAD](https://muad-dataset.github.io/) We use the challenge subset.
+
+Alternatively, for ease of use and standardization, you may prefer to download a preprocessed version of the datasets from [Synboost](https://github.com/giandbt/synboost), 
+which includes RoadAnomaly, FS Static, and FS Lost&Found:
+* [Preprocessed Datasets](http://robotics.ethz.ch/~asl-datasets/Dissimilarity/data_processed.tar)
+
+After downloading the dataset(s), you will need to configure the data directory in [lib/dataset/](lib/dataset/) to align with the structure of the downloaded files.
+The expected data structure for these datasets in our code is as follows:
 
 ```
 datasets
-├── cityscapes                      
+├── cityscapes
+│   ├── leftImg8bit
+│   └── gtFine  
+├── multishift_cityscapes (our augmented dataset)
+│   ├── leftImg8bit
+│   └── gtFine                                         
 ├── road_anomaly
 │   ├── original
 │   └── labels
-├── dataset_AnomalyTrack            #RA21
+├── dataset_AnomalyTrack            
 │   ├── images
 │   └── labels_masks
-├── dataset_ObstacleTrack           #RO21
+├── dataset_ObstacleTrack           
 │   ├── images
-│   ├── image-sources.txt
 │   └── labels_masks
 ├── MUAD_challenge                  
 │   └── test_sets
 │       └── test_OOD
 │           ├── leftImg8bit
 │           └── leftLabel
-├── acdc_ood                        #ACDC-POC
+├── acdc_poc                        
 │   ├── gt_trainval
 │   └── rgb_anon_trainvaltest
-├── fs_LostAndFound                 
-│   ├── original
-│   └── labels 
-└── fs_static
-    ├── original
-    ├── labels 
-    └── match.npy
 ```
 
-Generated data can be downloaded
-from [Google Drive](https://drive.google.com/file/d/1PxjH5q-R6kBdVaaC0ssBXwl8Z7JbBWIk/view?usp=share_link)
-or [Hugging Face](https://huggingface.co/datasets/Cuttle-fish-my/DTWP_ADE/tree/main).
-To generate the data, please refer to the [Generation Instruction](ControlNet/README.md).
+### Training
+To train the models, use the following commands:
+```bash
+# DeepLab v3+
+python train_deeplab.py --cfg 'exp/DeepLab.yaml' --id <YOUR_EXP_ID> --weight_path <YOUR_PATH_TO>/DeepLabV3+_WideResNet38_baseline.pth
+```
+We follow previous works such as [RPL](https://github.com/yyliu01/RPL) initialize DeepLab v3+ with a pretrained closed-world model checkpoint from [NVIDIA's semantic segmetation repository](https://github.com/NVIDIA/semantic-segmentation/tree/sdcnet). You can the pretrained checkpoint from [this Google Drive link](https://drive.google.com/file/d/1P4kPaMY-SmQ3yPJQTJ7xMGAB_Su-1zTl/view). After downloading, specify the model weight path using the `--weight_path` argument.
 
-For more detailed instructions, please refer to the [Dataset Instruction](datasets/README.md).
+```bash
+# Mask2Former
+python train_m2f.py --cfg 'exp/M2F.yaml' --id <YOUR_EXP_ID> --weight_path <YOUR_PATH_TO>/bt-f-xl.pth
+```
+For the Mask2Former model, we use the first-stage pretrained checkpoint provided by the [Mask2Anomaly](https://github.com/shyam671/ Mask2Anomaly-Unmasking-Anomalies-in-Road-Scene-Segmentation?tab=readme-ov-file) project. You can download this checkpoint from [this Google Drive link](https://drive.google.com/file/d/1UVms08chnBkZta_cNumjiei6GByyM9VN/view?usp=share_link) and then provide its path via the `--weight_path` argument.
+
+### Evaluation
+
+After training the model, you can perform inference and evaluate out-of-distribution detection performance using the following commands:
+
+```bash
+python test_deeplab.py --cfg 'exp/DeepLab.yaml' --id  <YOUR_EXP_ID> --weight_path <MODEL_WEIGHT_PATH>
+```
+or 
+```bash
+python test_m2f.py --cfg 'exp/M2F.yaml' --id  <YOUR_EXP_ID> --weight_path <MODEL_WEIGHT_PATH>
+```
+If you wish to evaluate using the provided pretrained models, download the corresponding checkpoints below, and replace <MODEL_WEIGHT_PATH> with the path to the downloaded weights.
+
+
 ### Checkpoint
 
 |             | RoadAnomaly | RoadAnomaly | RoadAnomaly | SMIYC-RA21 | SMIYC-RA21 | SMIYC-RO21 | SMIYC-RO21 |                                                                                                 Weights                                                                                                 |
@@ -103,13 +143,7 @@ For more detailed instructions, please refer to the [Dataset Instruction](datase
 | DeepLab v3+ |    96.40    |    74.60    |    16.08    |   88.06    |    8.21    |   90.71    |    0.26    | [Google Drive](https://drive.google.com/file/d/1EB73bf3w0HJQdNcpFp_vOgWpOctYz7Tr/view?usp=share_link) or [Hugging Face](https://huggingface.co/Cuttle-fish-my/MultiShiftSeg/blob/main/DeepLab_best.pth) |
 | Mask2Former |    97.94    |    90.17    |    7.54     |   91.92    |    7.94    |   95.29    |    0.07    |   [Google Drive](https://drive.google.com/file/d/1wH0skkEk6DXMVawegwcFLHhc1mA0Z3p1/view?usp=share_link) or [Hugging Face](https://huggingface.co/Cuttle-fish-my/MultiShiftSeg/blob/main/M2F_best.pth)   |
 
-### Training
-
-Coming Soon.
-
-### Evaluation
-
-Coming Soon.
+Note: The SMIYC results reported are evaluated on the official online benchmarks. To verify the correctness of the pretrained models locally, you can run inference on the RoadAnomaly dataset. The evaluation scores should closely match those shown in the table.
 
 ### BibTeX
 

@@ -400,4 +400,7 @@ dependencies:
     - yarl==1.9.4
     - zipp==3.18.1
     - zstd==1.5.5.1
+    - gdown
+    - huggingface_hub
+    - easydict
 prefix: /public/home/libn/.conda/envs/ood_seg_cuda11

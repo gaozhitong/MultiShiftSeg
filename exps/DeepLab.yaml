@@ -1,0 +1,34 @@
+data:
+  train_ds: 'DiverseCityscapes'
+  val_ds: 'RoadAnomaly21'
+  anomaly_mix: True
+  mixup: True
+  num_workers: 4
+
+model:
+  backbone: 'WideResNet38'
+  trainable_params_name: ["ood_head"]
+  trainable_params_name_update: ["aspp", "bot_fine","bot_aspp","ood_head"]
+
+train:
+  n_epochs: 50
+  warmup_epoch: 10
+
+  train_batch: 8
+  valid_batch: 2
+  test_batch: 1
+
+  optimizer: Adam
+  lr: 1.0e-4
+  lr_update: 1.0e-6
+  momentum: 0.9
+  weight_decay: 1.0e-4
+
+loss:
+  name: 'RelContrastiveLoss'
+  params: {
+            'ce_weights': [ 50,10],
+            'conduct_pixel_selection': True,
+            'selection_ratio': 0.8,
+            'inoutaug_contras_margins_tri': [ 10,5,5 ],
+  }

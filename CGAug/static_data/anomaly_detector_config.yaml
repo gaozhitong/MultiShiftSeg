@@ -1,0 +1,53 @@
+data:
+  train_ds: 'DiverseCityscapes'
+  val_ds: 'RoadAnomaly'
+  paste_coco: True
+  use_mixup: False
+  ood_scale_array: [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
+  same_transform: True
+  ood_obj_config: 'same_idx'
+  coco_class_split: True
+  sample_number: 50
+
+model:
+  method: 'Mask2Anomaly'
+  backbone: 'WideResNet38' # ['WideResNet38', 'ResNet101']
+  trainable_params_name: ["."]#["aspp", "bot_fine","bot_aspp"]
+
+
+train:
+  use_generated_img: True
+  n_epochs: 50
+  train_batch: 8 # Double compared to exp using generated images
+  train_droplast: True
+  train_shuffle: True
+
+  valid_batch: 2
+  test_batch: 1
+
+  optimizer: Adam
+  momentum: 0.9
+  lr: 1.0e-6
+  weight_decay: 1.0e-4
+
+loss:
+  name: 'BiContrasLoss'
+  params: {
+            'separate_ce': True,
+            'separate_ce_weights': [ 1,1 ],
+            #'distill': True,
+            'conduct_pixel_selection': True,
+            'selection_ratio': 0.5,
+            'max_selection_ratio': 0.7,
+            'selection_ratio_step': 0.05,
+            'kl_div': True,
+            'kl_div_param': {
+                  'in_out_sep': True,
+                  'bi': 1,
+                  'ref_nograd': True
+                  },
+            'separate_kl_div_weight': [1.0, 0.0],
+            'inoutaug_contras':'3absolute',
+            'inoutaug_contras_margins_tri': [ 5,5,0],
+            'separate_contras_weight': [1.0, 1.0, 1.0]
+  }

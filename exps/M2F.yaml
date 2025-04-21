@@ -1,0 +1,41 @@
+data:
+  train_ds: 'DiverseCityscapes'
+  val_ds: 'RoadAnomaly21'
+  anomaly_mix: True
+  mixup: True
+  num_workers: 4
+
+model:
+  trainable_params_name: ["class_embed2"]
+  trainable_params_name_update: ["."]
+
+  mask2anomaly:
+    replace_official_odd_loss_with_RCL: True
+    deep_supervision: False
+
+train:
+  n_epochs: 50
+  warmup_epoch: 5
+
+  train_batch: 8
+  valid_batch: 1
+  test_batch: 1
+
+  optimizer: Adam
+  momentum: 0.9
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+
+loss:
+  name: 'RelContrastiveLoss'
+  params: {
+            'ce_weights': [ 0,0 ],
+            'inoutaug_contras_margins_tri': [ 0.7,0.5,0.2 ],
+
+            'mask2anomaly_loss_weight': {
+              'class_weight': 5.0,
+              'mask_weight': 10.0,
+              'dice_weight': 10.0,
+              'ood_weight': 1.0
+            }
+  }
