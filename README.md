@@ -15,8 +15,8 @@
 
 <p align="center"> 
     [<a href="https://arxiv.org/abs/2411.03829#:~:text=Towards%20Robust%20Semantic%20Segmentation%20Under%20Multiple%20Distribution%20Shifts,-Zhitong%20Gao%2C%20Bingnan&text=In%20open%2Dworld%20scenarios%2C%20where,and%20generalize%20to%20new%20domains.">Arxiv</a>]
-    [<a href="">Poster</a>]
-    [<a href="">Slides</a>]
+    [<a href="https://gaozhitong.github.io/posters/poster-cgaug.pdf">Poster</a>]
+    [<a href="https://gaozhitong.github.io/slides/slides-cgaug.pdf">Slides</a>]
     [<a href="https://recorder-v3.slideslive.com/?share=95164&s=dd2ba512-5f4c-47ca-8744-4a6a44ad7479">Video</a>]
 </p> 
 
